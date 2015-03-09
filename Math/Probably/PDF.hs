@@ -1,4 +1,4 @@
--- | 
+-- |
 -- Defines Log-domain probability density functions
 
 
@@ -15,7 +15,7 @@ import qualified Data.Vector.Storable as VS
 type PDF a = a->Double
 
 instance Show (a->Double) where
-    show f = error "Math.Prob.PDF: showing function" 
+    show f = error "Math.Prob.PDF: showing function"
 
 instance Eq (a->Double) where
     f == g = error "Math.Prob.PDF: comparing functions!"
@@ -41,7 +41,7 @@ gauss mean sd x = realToFrac $ negate $ (x-mean)**2/(2*sd*sd) + log(sd*sqrt(2*pi
 
 -- | Normal distribution by variance
 normal :: (Real a, Floating a) => a-> a-> a -> a
-normal = normalLogPdf 
+normal = normalLogPdf
 
 normalLogPdf :: (Real a, Floating a) => a-> a-> a -> a
 normalLogPdf mean variance x
@@ -67,12 +67,12 @@ logNormal m var x = negate $ log (x*sqrt(2*pi*var)) + (log x - m)**2 / (2*var)
 logNormalD :: Double -> Double-> PDF Double
 logNormalD = logNormal
 
--- | Beta distribution 
+-- | Beta distribution
 beta a b x = log $ (recip $ S.beta a b) * x ** (a-1) * (1-x) ** (b-1)
 
 -- | Binomial distribution. This is the Probability Mass Function, not PDF
 binomial :: Int -> Double -> PDF Int
-binomial n p k = 
+binomial n p k =
     let realk = realToFrac k
     in log (realToFrac (choose (toInteger n) (toInteger k))) + realk * log( p ) + (realToFrac $ n-k) * log( (1-p) )
  where --http://blog.plover.com/math/choose.html
@@ -91,30 +91,30 @@ mulPdf :: Num a => PDF a -> PDF a -> PDF a
 mulPdf d1 d2 = \x -> (d1 x + d2 x)
 
 --instance Num a => Num (PDF a) where
-   
-instance NFData (Matrix Double) 
-   where rnf mat = mapMatrix (\x-> x `seq` 1.0::Double) mat `seq` ()
+
+--instance NFData (Matrix Double)
+--   where rnf mat = mapMatrix (\x-> x `seq` 1.0::Double) mat `seq` ()
 
 -- | multivariate normal
 multiNormal :: Vector Double -> Matrix Double -> PDF (Vector Double)
-multiNormal mu sigma = 
+multiNormal mu sigma =
   let k = realToFrac $ dim mu
-      invSigma =  inv sigma 
+      invSigma =  inv sigma
       mat1 = head . head . toLists
-  in \x-> log (recip ((2*pi)**(k/2) * sqrt(det sigma))) + (mat1 $ negate $ 0.5*(asRow $ x-mu) `multiply` invSigma `multiply` (asColumn $ x-mu) ) 
+  in \x-> log (recip ((2*pi)**(k/2) * sqrt(det sigma))) + (mat1 $ negate $ 0.5*(asRow $ x-mu) `multiply` invSigma `multiply` (asColumn $ x-mu) )
 
 
 multiNormalByInv :: Double -> Matrix Double -> Vector Double -> PDF (Vector Double)
-multiNormalByInv lndet invSigma mu = 
+multiNormalByInv lndet invSigma mu =
   let k = realToFrac $ dim mu
       mat1 = head . head . toLists
-  in \x-> log 1 - (k/2)*log (2*pi) - lndet/2 + (mat1 $ negate $ 0.5*(asRow $ x-mu) `multiply` invSigma `multiply` (asColumn $ x-mu) ) 
+  in \x-> log 1 - (k/2)*log (2*pi) - lndet/2 + (mat1 $ negate $ 0.5*(asRow $ x-mu) `multiply` invSigma `multiply` (asColumn $ x-mu) )
 
 multiNormalByInvFixCov ::  Matrix Double -> Vector Double -> PDF (Vector Double)
-multiNormalByInvFixCov invSigma mu = 
+multiNormalByInvFixCov invSigma mu =
   let k = realToFrac $ dim mu
       mat1 = head . head . toLists
-  in \x-> (mat1 $ negate $ 0.5*(asRow $ x-mu) `multiply` invSigma `multiply` (asColumn $ x-mu) ) 
+  in \x-> (mat1 $ negate $ 0.5*(asRow $ x-mu) `multiply` invSigma `multiply` (asColumn $ x-mu) )
 
 
 multiNormalIndep :: Vector Double -> Vector Double -> PDF (Vector Double)
@@ -129,13 +129,13 @@ tst = multiNormal mu1 sig1 mu1
 tsta = inv sig1
 tstb = det sig1
 tstc = let mu = mu1
-           sigma = sig1 
+           sigma = sig1
            x = mu1
            invSigma = inv sigma
        in (asRow $ x-mu) `multiply` invSigma `multiply` (asColumn $ x-mu)  -}
 
 
-posdefify m = 
+posdefify m =
    let (eigvals, eigvecM) = eigSH $ mkSym {- $ trace (show m) -}  m
        n = rows m
        eigValsVecs = map f $ zip (toList eigvals) (toColumns eigvecM)
@@ -144,5 +144,5 @@ posdefify m =
        bigLambda = diag $ fromList $ map fst eigValsVecs
    in mkSym $ q `multiply` bigLambda `multiply` inv q
 
-mkSym m = buildMatrix (rows m) (cols m)$ \(i,j) ->if i>=j then m @@>(i,j) 
-                                                           else m @@>(j,i) 
+mkSym m = buildMatrix (rows m) (cols m)$ \(i,j) ->if i>=j then m @@>(i,j)
+                                                           else m @@>(j,i)
